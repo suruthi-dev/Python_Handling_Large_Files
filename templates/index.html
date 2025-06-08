@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flask Dropdown Modal Example</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <label for="docDropdown">Select Document:</label>
+        <select id="docDropdown"></select>
+    </div>
+    <!-- ...existing code... -->
+<div class="main-content">
+    <h1>Welcome</h1>
+    <!-- File upload form start -->
+    <form id="uploadForm" style="margin-bottom: 1em;">
+        <input type="file" id="fileInput" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="uploadResult" style="color: green;"></div>
+    <!-- File upload form end -->
+    <ul id="selectedList"></ul>
+</div>
+<!-- ...existing code... -->
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <div class="modal-header">
+                <span>Values</span>
+                <button id="selectAllBtn">Select All</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Values with toggles will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
