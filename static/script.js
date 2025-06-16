@@ -130,4 +130,85 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modal').style.display = 'none';
         }
     };
+
+    // Prevent default drag behaviors on the whole document
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    // Drag and Drop Folder Upload
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.background = '#f0f0f0';
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.background = '';
+        });
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.background = '';
+            const items = e.dataTransfer.items;
+            if (!items) return;
+
+            let files = [];
+            // Helper to recursively get all files from a directory
+            async function traverseFileTree(item, path = "") {
+                return new Promise((resolve) => {
+                    if (item.isFile) {
+                        item.file(file => {
+                            file.relativePath = path + file.name;
+                            resolve([file]);
+                        });
+                    } else if (item.isDirectory) {
+                        const dirReader = item.createReader();
+                        dirReader.readEntries(async (entries) => {
+                            let allFiles = [];
+                            for (const entry of entries) {
+                                const entryFiles = await traverseFileTree(entry, path + item.name + "/");
+                                allFiles = allFiles.concat(entryFiles);
+                            }
+                            resolve(allFiles);
+                        });
+                    }
+                });
+            }
+
+            // Collect all files from the dropped folder(s)
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+                if (item) {
+                    const entryFiles = await traverseFileTree(item);
+                    files = files.concat(entryFiles);
+                }
+            }
+
+            if (files.length === 0) {
+                document.getElementById('dropResult').innerText = "No files found in folder.";
+                return;
+            }
+
+            // Upload each file to the backend
+            let uploaded = 0;
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file, file.relativePath || file.name);
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.message) uploaded++;
+            }
+            document.getElementById('dropResult').innerText = `Uploaded ${uploaded} files from folder.`;
+        });
+    }
 });
